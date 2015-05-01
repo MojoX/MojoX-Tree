@@ -20,7 +20,7 @@ my %config = (
 		{dsn=>'database=test;host=localhost;port=3306;mysql_connect_timeout=5;', id=>2, type=>'slave'},
 	]
 );
-$config{'user'} = 'travis' if(defined $ENV{'USER'} && $ENV{'USER'} eq 'travis');
+$config{'user'} = 'root' if(defined $ENV{'USER'} && $ENV{'USER'} eq 'travis');
 
 my $mysql = MojoX::Mysql->new(%config);
 my $tree = MojoX::Tree->new(mysql=>$mysql, table=>'tree', length=>10, column=>{id=>'tree_id', name=>'name', path=>'path', level=>'level', parent_id=>'parent_id'});
