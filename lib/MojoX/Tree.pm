@@ -209,3 +209,99 @@ sub make_level {
 
 
 1;
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+MojoX::Tree - Mojolicious ♥ Tree
+ 
+=head1 SYNOPSIS
+
+    use MojoX::Tree;
+    use Mojo::Util qw(dumper);
+
+    my %config = (
+        user=>'root',
+        password=>undef,
+        server=>[
+            {dsn=>'database=test;host=localhost;port=3306;mysql_connect_timeout=5;', type=>'master'},
+            {dsn=>'database=test;host=localhost;port=3306;mysql_connect_timeout=5;', type=>'slave'},
+        ]
+    );
+
+    my $mysql = MojoX::Mysql->new(%config);
+    my $tree = MojoX::Tree->new(
+        mysql=>$mysql,
+        table=>'tree',
+        length=>10,
+        column=>{
+            id=>'tree_id',
+            name=>'name',
+            path=>'path',
+            level=>'level',
+            parent_id=>'parent_id'
+        }
+    );
+
+
+=head1 DESCRIPTION
+
+MojoX::Tree - Implementation of the materialized path for the Mojolicious real-time web framework.
+
+=head1 METHODS
+
+=head2 add
+
+    my $id = $tree->add('name'); # create root branch
+
+    $tree->add('name', $id); # sub branch
+
+=head2 delete
+
+    $tree->delete(1); # delete branch and sub branch
+
+=head2 move
+
+    $tree->move(1,2); # move branch (1) to branch (2)
+
+=head2 get_id
+
+    say dumper $tree->get_id(1); # get branch (1)
+
+=head1 EXAMPLE TABLE
+
+    CREATE TABLE `tree` (
+        `tree_id` int(14) unsigned NOT NULL AUTO_INCREMENT,
+        `name` varchar(255) NOT NULL,
+        `path` mediumtext NOT NULL,
+        `level` int(14) unsigned NOT NULL,
+        `parent_id` int(14) unsigned NULL,
+        PRIMARY KEY (`tree_id`),
+        KEY `path` (`path`(30))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+=head1 Mojolicious Plugin
+
+SEE ALSO L<Mojolicious::Plugin::Tree>
+
+=head1 TODO
+
+    1.Move root
+    2.Get all tree
+
+=head1 AUTHOR
+
+Kostya Ten, C<kostya@cpan.org>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2014, Kostya Ten.
+
+This program is free software, you can redistribute it and/or modify it under
+the terms of the Apache License version 2.0.
+
+=cut
+
