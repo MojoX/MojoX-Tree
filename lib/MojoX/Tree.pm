@@ -5,7 +5,7 @@ use Mojo::Collection 'c';
 use DBI;
 use Carp qw(croak);
   
-our $VERSION  = '0.01';
+our $VERSION  = '0.02';
 
 sub new {
 	my $class = shift;
@@ -221,6 +221,7 @@ MojoX::Tree - Mojolicious ♥ Tree
 =head1 SYNOPSIS
 
     use MojoX::Tree;
+    use MojoX::Mysql;
     use Mojo::Util qw(dumper);
 
     my %config = (

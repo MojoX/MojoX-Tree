@@ -76,7 +76,9 @@ Mojolicious::Plugin::Tree - Mojolicious Plugin Tree
     say dumper $self->tree->obj2; # return MojoX::Tree table tree2
 
 =head1 HELPERS
-=head2 mysql
+
+=head2 tree
+
     $app->tree->obj;
 
 Return L<MojoX::Tree> object.
