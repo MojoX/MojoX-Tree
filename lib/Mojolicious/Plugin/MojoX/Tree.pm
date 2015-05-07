@@ -1,10 +1,10 @@
-package Mojolicious::Plugin::MojoX-Tree;
+package Mojolicious::Plugin::Tree;
 use Mojo::Base 'Mojolicious::Plugin';
 
 our $VERSION = '0.01';
 
 sub register {
-  my ($self, $app) = @_;
+	my ($self, $app) = @_;
 }
 
 1;
@@ -18,15 +18,15 @@ Mojolicious::Plugin::MojoX-Tree - Mojolicious Plugin
 
 =head1 SYNOPSIS
 
-  # Mojolicious
-  $self->plugin('MojoX-Tree');
+	# Mojolicious
+	$self->plugin('Tree');
 
-  # Mojolicious::Lite
-  plugin 'MojoX-Tree';
+	# Mojolicious::Lite
+	plugin 'Tree';
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Plugin::MojoX-Tree> is a L<Mojolicious> plugin.
+L<Mojolicious::Plugin::Tree> is a L<Mojolicious> plugin.
 
 =head1 METHODS
 

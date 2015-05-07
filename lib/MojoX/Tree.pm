@@ -48,7 +48,7 @@ sub mysql {
 	return shift->{'mysql'};
 }
 
-sub add_item {
+sub add {
 	my ($self,$name,$parent_id) = @_;
 
 	my $table = $self->{'table'};
@@ -61,13 +61,10 @@ sub add_item {
 	my $parent_path = undef;
 	if(defined $parent_id && $parent_id){
 		my $get_id = $self->get_id($parent_id);
-		if(defined $get_id){
-			$parent_path = $get_id->{'path'};
-		}
-		else{
-			croak "invalid parent_id:$parent_id";
-		}
+		$parent_path = $get_id->{'path'};
 	}
+
+	croak "invalid name" if(!$name);
 
 	# Создаем запись
 	my ($insertid,$counter) = $self->mysql->do("INSERT INTO `$table` (`$column_name`) VALUES (?)", $name);
@@ -78,15 +75,17 @@ sub add_item {
 	$path = $parent_path.$path if(defined $parent_path);
 	my $level = $self->make_level($path); # Узнает текущий уровень
 
-	$self->mysql->do(
+	my (undef,$update_counter) = $self->mysql->do(
 		"UPDATE `$table` SET `$column_path` = ?, `$column_level` = ?, `$column_parent_id` = ? WHERE `$column_id` = ?;",
 		$path,$level,$parent_id,$insertid
 	);
+
+	croak "invalid update table" if($update_counter != 1);
 	return $insertid;
 }
 
 # Удаляет текущего элемент и детей
-sub delete_item {
+sub delete {
 	my ($self,$id) = @_;
 
 	my $path = undef;
@@ -109,7 +108,7 @@ sub delete_item {
 	}
 }
 
-sub move_item {
+sub move {
 	my ($self,$id,$target_id) = @_;
 	my $table = $self->{'table'};
 	my $column_id        = $self->{'column'}->{'id'};
@@ -130,40 +129,21 @@ sub move_item {
 	my $path_target = $get_target_id->{'path'};
 	croak "Impossible to transfer to itself or children" if($path =~ m/^$path_target/);
 
+	my $length = $self->{'length'};
 	my $collection = $self->mysql->query("SELECT `$column_id` as `id`, `$column_path` as `path` FROM `$table` WHERE `$column_path` LIKE '$path%';");
 	$collection->each(sub {
 		my $e = shift;
-		my $id   = $e->{'id'};
+		my $id = $e->{'id'};
 		if($e->{'path'} =~ m/(?<path>($path\d*))/g){
-			say dumper $path_target.$+{'path'};
-			#my $level           = $self->_level($path_target.$+{'path'});
-			#my $parent_id       = $self->_parent_id($path_target.$+{'path'});
+			my $path = $path_target.$+{'path'};
+			my $level = $self->make_level($path);
+
+			my $parent_id = 'NULL';
+			$parent_id = int $+{'parent_id'} if($path =~ m/(?<parent_id>(\d{$length}))\d{$length}$/);
+			$self->mysql->do("UPDATE `$table` SET `$column_path` = ?, `level` = ?, `$column_parent_id` = ? WHERE `$column_id` = ?",$path,$level,$parent_id,$id);
 		}
 	});
-
-
-
-	#$self->get_id($target_id);
 }
-
-sub make_path {
-	my ($self,$id) = @_;
-	my $length = $self->{'length'};
-	my $length_id = length $id;
-	if($length_id < $length){
-		my $zero = '0' x ($length - $length_id);
-		$id = $zero.$id;
-	}
-	return $id;
-}
-
-sub make_level {
-	my ($self,$path) = @_;
-	my $length = $self->{'length'};
-	my @counter = ($path =~ m/([0-9]{$length})/g);
-	return scalar @counter;
-}
-
 
 # Получение очереди по id
 sub get_id {
@@ -177,7 +157,7 @@ sub get_id {
 	my $column_parent_id = $self->{'column'}->{'parent_id'};
 
 	my ($collection,$counter) = $self->mysql->query("SELECT `$column_id`, `$column_path`, `$column_name`, `$column_level`, `$column_parent_id` FROM `$table` WHERE `$column_id` = ? LIMIT 1", $id);
-	return if($counter eq '0E0');
+	croak "invalid id:$id" if($counter eq '0E0');
 
 	my $result = $collection->last;
 
@@ -208,5 +188,24 @@ sub get_id {
 	$result->{'parent'} = $parent;
 	return $result;
 }
+
+sub make_path {
+	my ($self,$id) = @_;
+	my $length = $self->{'length'};
+	my $length_id = length $id;
+	if($length_id < $length){
+		my $zero = '0' x ($length - $length_id);
+		$id = $zero.$id;
+	}
+	return $id;
+}
+
+sub make_level {
+	my ($self,$path) = @_;
+	my $length = $self->{'length'};
+	my @counter = ($path =~ m/([0-9]{$length})/g);
+	return scalar @counter;
+}
+
 
 1;

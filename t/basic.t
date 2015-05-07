@@ -41,7 +41,13 @@ my $sql = qq/
 /;
 $mysql->do($sql); # создаем таблицу
 
-my $id = $tree->add_item('test');
+eval{ $tree->add() };
+like($@, qr/invalid name/, 'invalid name');
+
+eval{ $tree->add('test',12345) };
+like($@, qr/invalid id/, 'invalid id');
+
+my $id = $tree->add('test');
 ok($id == 1,'check id');
 
 my $result = $tree->get_id($id);
@@ -52,8 +58,8 @@ ok($result->{'tree_id'} == 1, 'tree_id');
 ok(ref $result->{'children'} eq 'Mojo::Collection', 'children');
 ok(ref $result->{'parent'} eq 'Mojo::Collection', 'parent');
 
-
-$id = $tree->add_item('тест',$id);
+note('sub');
+$id = $tree->add('тест',$id);
 $result = $tree->get_id($id);
 ok($result->{'path'} eq '00000000010000000002', 'path');
 ok($result->{'parent_id'} == 1, 'parent_id');
@@ -65,20 +71,30 @@ ok($result->{'parent'}->size == 1, 'parent size');
 $result = $tree->get_id(1);
 ok($result->{'children'}->size == 1, 'children size');
 
-$result = $tree->delete_item(1);
-ok($result == 2, 'delete_item');
+$result = $tree->delete(1);
+ok($result == 2, 'delete');
 
+eval{ $tree->get_id(1) };
+like($@, qr/invalid id/, 'invalid id');
 
+note('move');
+my $id1 = $tree->add('root1');
+my $id2 = $tree->add('root2');
+my $id3 = $tree->add('root3',$id2);
 
+eval{ $tree->move($id1,$id1) };
+like($@, qr/Impossible to transfer to itself or children/, 'Impossible to transfer to itself or children');
 
-#$tree->add_item('test',2);
-#my $id = $tree->add_item('new root');
-#$tree->move_item(2,$id);
-#say dumper $tree->get_id(2);
+eval{ $tree->move($id3,$id2) };
+like($@, qr/Impossible to transfer to itself or children/, 'Impossible to transfer to itself or children');
+
+$tree->move($id2,$id1);
+$result = $tree->get_id($id1);
+ok(ref $result->{'children'} eq 'Mojo::Collection', 'children');
+ok($result->{'children'}->size == 2, 'children size');
 
 $mysql->db->commit;
 
-
-
 done_testing();
+
 
