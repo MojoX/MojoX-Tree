@@ -152,9 +152,15 @@ sub get_id {
 	my $table = $self->{'table'};
 	my $column_id        = $self->{'column'}->{'id'};
 	my $column_name      = $self->{'column'}->{'name'};
+	my $column_names     = $self->{'column'}->{'names'};
 	my $column_path      = $self->{'column'}->{'path'};
 	my $column_level     = $self->{'column'}->{'level'};
 	my $column_parent_id = $self->{'column'}->{'parent_id'};
+
+	my @column_names = ();
+	if(defined $column_names && $column_names && ref $column_names eq 'ARRAY'){
+		push(@column_names, `$_`) for(@{$column_names});
+	}
 
 	my ($collection,$counter) = $self->mysql->query("SELECT `$column_id`, `$column_path`, `$column_name`, `$column_level`, `$column_parent_id` FROM `$table` WHERE `$column_id` = ? LIMIT 1", $id);
 	croak "invalid id:$id" if($counter eq '0E0');
